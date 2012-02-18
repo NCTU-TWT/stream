@@ -4,6 +4,10 @@
 
     $ npm install git@github.com:NCTU-TWT/monitor-stream.git
     
+如果 `package.json` 裡有加注此模組來源
+
+    $ npm install monitor-stream
+    
 # 使用
 
     var stream      = require('monitor-stream').createStream(),
