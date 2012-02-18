@@ -5,8 +5,7 @@ var assert      = require('assert'),
     colors      = require('colors');
     db          = require('../index').createDBConnection(); 
 
-
-db.use('test');
+db.namespace = 'test';
 
 var client = redis.createClient(6379, '61.222.87.71');
 client.on('error', function (err) {
