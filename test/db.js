@@ -3,7 +3,7 @@ var assert      = require('assert'),
     redis       = require('redis'),
     async       = require('async'),
     colors      = require('colors');
-    db          = require('../index').createDB(); 
+    db          = require('../index').createDBConnection(); 
 
 
 db.use('test');

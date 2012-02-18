@@ -1,4 +1,4 @@
 module.exports = {
     createStream: require('./lib/stream'),
-    createDB: require('./lib/db')
+    createDBConnection: require('./lib/db')
 };
