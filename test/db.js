@@ -3,12 +3,9 @@ var assert      = require('assert'),
     redis       = require('redis'),
     async       = require('async'),
     colors      = require('colors');
-    StreamDB    = require('../lib/streamdb'); 
+    db          = require('../index').createDB(); 
 
 
-var db = new StreamDB;
-
-db.connect();
 db.use('test');
 
 var client = redis.createClient(6379, '61.222.87.71');
@@ -16,7 +13,7 @@ client.on('error', function (err) {
     console.err(err);
 });
     
-var charts = [{
+var headers = [{
         'session': 'session01',
         'unit': 'G',
         'value': {
@@ -77,7 +74,7 @@ var streams = (function (times) {
         });
     }
     return list;
-})(5);
+})(40);
 
 var sameArray = function (a, b) {
     return _.all(a, function (aElem) {
@@ -93,13 +90,13 @@ var sameArray = function (a, b) {
 
 
 
-// addChart
-var testAddChart = function (callback) {
+// addHeader
+var testAddHeader = function (callback) {
 
-    tests = _.map(charts, function (chart) {
+    tests = _.map(headers, function (header) {
         return function (callback) {
             
-            db.addChart(chart, function (data) {
+            db.addHeader(header, function (data) {
 
                 async.parallel([
                     function (callback) {
@@ -118,13 +115,13 @@ var testAddChart = function (callback) {
                     },
                     function (callback) {
                 
-                        client.smembers('test:sessions:' + chart.session, function (err, data) { 
+                        client.smembers('test:sessions:' + header.session, function (err, data) { 
                             if (err) throw err; 
                             data = _.map(data, JSON.parse);  
                             var ok = _.any(data, function (ch) {
-                                return _.isEqual(ch, chart);
+                                return _.isEqual(ch, header);
                             });                            
-                            assert(ok, 'new chart not adding to the session'.red);
+                            assert(ok, 'new header not adding to the session'.red);
                             callback();
                         });
                 }], function () {
@@ -138,7 +135,7 @@ var testAddChart = function (callback) {
     });
     
     async.parallel(tests, function (err, result) {
-        console.log('addChart ' + 'pass'.green)       
+        console.log('addHeader ' + 'pass'.green)       
         callback();
     });
     
@@ -150,13 +147,13 @@ var testAddChart = function (callback) {
 // getSession
 var testGetSession = function (callback) {
 
-    tests = _.map(charts, function (chart) {
+    tests = _.map(headers, function (header) {
         return function (callback) {
             
-            db.getSession(chart.session, function (result) {
+            db.getSession(header.session, function (result) {
                             
-                expected = _.filter(charts, function (elem) {
-                    return elem.session === chart.session;
+                expected = _.filter(headers, function (elem) {
+                    return elem.session === header.session;
                 })
                 
                 var ok = sameArray(result, expected);
@@ -183,15 +180,15 @@ var testGetSession = function (callback) {
 // getSessions
 var testGetSessions = function (callback) {
 
-    tests = _.map(charts, function (chart) {
+    tests = _.map(headers, function (header) {
         return function (callback) {
             
             db.getSessions(function (result) {
                 
-                var ok = _.all(charts, function (chart) {
+                var ok = _.all(headers, function (header) {
                 
                     return _.any(_.flatten(result), function (elem) {
-                        return _.isEqual(chart, elem);
+                        return _.isEqual(header, elem);
                     });
                 });
                 
@@ -213,7 +210,7 @@ var testGetSessions = function (callback) {
 // getSessionList
 var testGetSessionList = function (callback) {
 
-    tests = _.map(charts, function (chart) {
+    tests = _.map(headers, function (header) {
         return function (callback) {
             
             db.getSessionList(function (result) {
@@ -275,14 +272,14 @@ var testGetStream = function (callback) {
 // removeSession
 var testRemoveSession = function (callback) {
 
-    tests = _.map(charts, function (chart) {
+    tests = _.map(headers, function (header) {
         return function (callback) {
             
-            db.removeSession(chart.session, function (result) {
+            db.removeSession(header.session, function (result) {
                 
                 var streamList = [];
                 
-                streamList = streamList.concat(_.values(chart.value));
+                streamList = streamList.concat(_.values(header.value));
                 
                 var tests = _.map(streamList, function (streamID) {
                     return function (callback) {                        
@@ -297,7 +294,7 @@ var testRemoveSession = function (callback) {
                 });
             
                 tests.push(function (callback) {
-                    client.sismember('test:sessions', chart.session, function (err, data) {                
+                    client.sismember('test:sessions', header.session, function (err, data) {                
                         if (err) throw err;
                         
                         var ok = data === 0;
@@ -309,7 +306,7 @@ var testRemoveSession = function (callback) {
             
                 tests.push(function (callback) {
                 
-                    client.exists('test:sessions:' + chart.session, function (err, data) {                
+                    client.exists('test:sessions:' + header.session, function (err, data) {                
                         if (err) throw err;                            
                         var ok = data === 0;
                         
@@ -335,13 +332,13 @@ var testRemoveSession = function (callback) {
 };
 
 
-// addStream
-var testAddStream = function (callback) {
+// addData
+var testAddData = function (callback) {
 
     tests = _.map(streams, function (stream) {
         return function (callback) {
             
-            db.addStream(stream, function (result) {
+            db.addData(stream, function (result) {
             
             
                 client.lrange('test:streams:' + stream.id, 0, -1, function (err, data) {                
@@ -365,7 +362,7 @@ var testAddStream = function (callback) {
     });
 
     async.parallel(tests, function (err, result) {
-        console.log('addStream ' + 'pass'.green)       
+        console.log('addData ' + 'pass'.green)       
         callback();
     });
     
@@ -375,8 +372,8 @@ var testAddStream = function (callback) {
 
 
 async.series([
-    testAddChart,
-    testAddStream,
+    testAddHeader,
+    testAddData,
     testGetSession,
     testGetSessions,
     testGetSessionList,
