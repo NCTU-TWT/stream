@@ -64,7 +64,7 @@
     })
 
 
-# 資料庫 createDBConnection([port=6379], [host='61.222.87.71'])
+# 資料庫 createDBConnection([port=6379], [host='127.0.0.1'])
 
 存取串流標頭和資料
 
